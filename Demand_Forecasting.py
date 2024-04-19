@@ -30,10 +30,15 @@ def app():
     # Set the 'date' column as the index
     df1.set_index('date', inplace=True)
 
+    # Resample to monthly data, summing sales for each month
+    df1 = pd.DataFrame(df1.resample('ME')['sales'].sum())
+    df1.index = pd.to_datetime(df1.index)
+
     st.write("The TIme Series Dataset")
     st.write(df1)   
-    st.erite(df1.shape)
-    
+    st.write(df1.shape)
+    st.write(df1.columns.tolist()) 
+
     st.write("The Time Series Plot")
 
     # Assuming your dataframe is called 'df'
