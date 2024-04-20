@@ -13,10 +13,10 @@ def app():
 
     text = """Prof. Louie F. Cervantes, M. Eng. (Information Engineering)
     \nCCS 229 - Intelligent Systems
-    *Department of Computer Science
-    *College of Information and Communications Technology
-    *##West Visayas State University##"""
-    st.text(text)
+    <br>Department of Computer Science
+    <br>College of Information and Communications Technology
+    <br>**West Visayas State University**"""
+    st.markdown(text)
 
     text = """This Streamlit app utilizes a Recurrent Neural Network (RNN) with 
     Long Short-Term Memory (LSTM) units to forecast future store item demand. 
