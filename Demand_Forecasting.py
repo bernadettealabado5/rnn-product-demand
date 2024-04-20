@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import time
 
 def app():
-    
+
     st.subheader('Store Item Demand Forecasting Using RNN with LSTM')
 
     text = """Prof. Louie F. Cervantes, M. Eng. (Information Engineering)
@@ -26,6 +26,30 @@ def app():
     leverages Streamlit's capabilities to create a user-friendly interface for 
     exploring time series forecasting with LSTMs. """
     st.write(text) 
+
+    text = """In this Kaggle challenge, participants tackle the task of forecasting monthly
+    sales for specific items across multiple stores. The dataset consists of sales data 
+    filtered by both store and item, encompassing 10 stores and 50 items in total. 
+    To address this forecasting problem, a subset of the dataset is first created, 
+    focusing on sales from a selected store and a chosen item.
+    Utilizing Recurrent Neural Network (RNN) architecture, specifically Long Short-Term 
+    Memory (LSTM) model, the provided subset of sales data is used for training. 
+    LSTM networks are adept at capturing temporal dependencies in sequential data, 
+    making them suitable for time series forecasting tasks like this one.
+    The LSTM model is trained on the subset of sales data to learn patterns and trends in 
+    monthly sales over time. Once trained, the model is capable of generating predictions 
+    for monthly sales for a specified number of years into the future. These predictions 
+    provide valuable insights into future sales trends, aiding store managers and inventory 
+    planners in making informed decisions.
+    To visualize the predicted sales data, a time series plot is generated, illustrating the 
+    forecasted monthly sales over the projected time period. This plot serves as a powerful 
+    tool for understanding sales trends, identifying potential peaks or dips in demand, and 
+    informing strategic decision-making processes.
+    This solution leverages advanced deep learning techniques to forecast monthly sales 
+    for specific items in individual stores, offering a data-driven approach to optimize 
+    inventory management and enhance business performance in the retail sector."""
+    with st.expander("Read About the Challenge and Solution"):
+        st.write(text)  
 
     df = pd.read_csv('./data/train.csv')
 
