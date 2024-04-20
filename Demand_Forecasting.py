@@ -155,9 +155,14 @@ def app():
 
     # Print model summary
     model.summary()
-
+    if "model" not in st.session_state:
+        st.session_state.model = model
 
     if st.sidebar.button("Start Training"):
+        if "model" not in st.session_state:
+            st.error("Please train the model before making predictions.")  
+            return
+
         progress_bar = st.progress(0, text="Training the LSTM network, please wait...")           
         # Train the model
         history = model.fit(x_train, y_train, epochs=200, batch_size=64, validation_data=(x_test, y_test))
@@ -276,17 +281,18 @@ def app():
         ax1.set_ylim(0, max_y_value)
 
         ax.set_xticks(subset_time_axis)
+        ax.set_xticklabels(time_axisLabels[subset_time_axis], rotation=45)
         ax.set_xlabel('\nMonth', fontsize=20, fontweight='bold')
         ax.set_ylabel('Sales', fontsize=20, fontweight='bold')
-        ax.set_xticklabels(time_axisLabels[subset_time_axis], rotation=45)
+
         ax.legend(loc='best', prop={'size':20})
         ax.tick_params(size=10, labelsize=15)
 
         ax1.set_title('Projected Sales')
         ax1.plot(nextyear['Sales'], color='red', label='predicted next year(s)')
+        ax1.set_xticklabels(np.array(nextyear['Month'], dtype='datetime64[D]'), rotation=45)
         ax1.set_xlabel('Month', fontsize=20, fontweight='bold')
         ax1.set_ylabel('Sales', fontsize=20, fontweight='bold')
-        ax1.set_xticklabels(np.array(nextyear['Month'], dtype='datetime64[D]'), rotation=45)
         ax1.tick_params(size=10, labelsize=15)
 
         st.pyplot(fig)  
