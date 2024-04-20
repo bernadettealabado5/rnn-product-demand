@@ -9,17 +9,16 @@ import time
 
 def app():
 
-    st.subheader('Store Item Demand Forecasting Using RNN with LSTM')
+    st.subheader('Store Item Demand Forecasting Using RNN-LSTM and GRU')
 
     text = """Prof. Louie F. Cervantes, M. Eng. (Information Engineering)
-    \nCCS 229 - Intelligent Systems
-    <br>Department of Computer Science
-    <br>College of Information and Communications Technology
-    <br>**West Visayas State University**"""
+    \nCCS 229 - Intelligent Systems :: Department of Computer Science
+    College of Information and Communications Technology
+    **West Visayas State University**"""
     st.markdown(text)
 
-    text = """This Streamlit app utilizes a Recurrent Neural Network (RNN) with 
-    Long Short-Term Memory (LSTM) units to forecast future store item demand. 
+    text = """This Streamlit app utilizes one of the following: a Recurrent Neural Network (RNN) with 
+    Long Short-Term Memory (LSTM) units or a Gated Recurrent Units (GRU) to forecast future store item demand. 
     The model is trained on time series data provided by the Kaggle 'Store Item Demand 
     Forecasting Challenge' dataset. You can interact with the app to visualize 
     past sales data and generate predictions for future periods. Under the hood, the app 
@@ -32,8 +31,8 @@ def app():
     filtered by both store and item, encompassing 10 stores and 50 items in total. 
     To address this forecasting problem, a subset of the dataset is first created, 
     focusing on sales from a selected store and a chosen item.
-    Utilizing Recurrent Neural Network (RNN) architecture, specifically Long Short-Term 
-    Memory (LSTM) model, the provided subset of sales data is used for training. 
+    Utilizing a Recurrent Neural Network (RNN) architecture, specifically Long Short-Term 
+    Memory (LSTM) model or a Gated Recurrent Units (GRU) the provided subset of sales data is used for training. 
     LSTM networks are adept at capturing temporal dependencies in sequential data, 
     making them suitable for time series forecasting tasks like this one.
     The LSTM model is trained on the subset of sales data to learn patterns and trends in 
