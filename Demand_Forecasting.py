@@ -66,7 +66,11 @@ def app():
     # Create the option box using st.selectbox
     selected_option = st.sidebar.selectbox("Select model type:", options)
     model_type = selected_option
-    
+
+    options = ['12', '24', '36', '48', '60', '72']
+    # Create the option box using st.selectbox
+    selected_option = st.sidebar.selectbox("Set lookback:", options)
+    look_back = int(selected_option)    
 
     filtered_df = df[(df['store'] == store_to_filter) & (df['item'] == item_to_filter)]
 
@@ -127,7 +131,7 @@ def app():
     y_train = y_train.to_numpy()
     y_test = y_test.to_numpy()
 
-    look_back = 12  # Number of past months to consider
+    #look_back = 12  # Number of past months to consider
     n_features = 1  # Number of features in your typhoon data
 
     if model_type == 'LSTM':
@@ -155,11 +159,10 @@ def app():
 
     # Print model summary
     model.summary()
-    if "model" not in st.session_state:
-        st.session_state.model = model
 
     if st.sidebar.button("Start Training"):
-
+        if "model" not in st.session_state:
+            st.session_state.model = model
         progress_bar = st.progress(0, text="Training the LSTM network, please wait...")           
         # Train the model
         history = model.fit(x_train, y_train, epochs=200, batch_size=64, validation_data=(x_test, y_test))
@@ -186,7 +189,7 @@ def app():
         st.success("LSTM Network training completed!") 
 
     years = st.sidebar.slider(   
-        label="Set the number years to project:",
+        label="Number years to forecast:",
         min_value=2,
         max_value=6,
         value=6,
@@ -220,12 +223,15 @@ def app():
         # Inverse transform the predictions to get the original scale
         predvalues = scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
         predvalues = pd.DataFrame(predvalues)
+        predvalues.set_index(df1.index, inplace=True)
 
         pred_period = years * 12    
         # Use the model to predict the next year of data
-        input_seq_len = 24         
+        input_seq_len = look_back         
         num_features=1
-        last_seq = data_norm[-input_seq_len:] # Use the last year of training data as the starting sequence
+
+        # check that look_back is less than the length of the data
+        last_seq = data_norm[-input_seq_len:] 
 
         preds = []
         for i in range(pred_period):
@@ -269,34 +275,35 @@ def app():
         step = max(1, len(time_axis) // 10)  # Ensure at least 1 tick
         subset_time_axis = time_axis[::step]
 
-        fig = plt.figure()
-        ax = fig.add_axes([0, 0, 2.1, 2])
-        ax1 = fig.add_axes([2.3, 0, 0.15 * years, 2])
+        fig, ax = plt.subplots(figsize=(10, 6))
 
         ax.set_title('Comparison of Actual and Predicted Sales')
-        ax.plot(df1.iloc[:,0].values, label='Original Dataset')
-        ax.plot(list(predvalues[0]), color='red', label='Model Predictions')
 
+        # Concatenate the two dataframes vertically
+        combined_df = pd.concat([df1, nextyear])
+
+        ax.plot(combined_df.index[:len(df1)], list(predvalues[0]), color='red', linestyle='-', label='Model Predictions')  # Solid line for model predictions
+
+        # Plot df1's sales values with one linestyle
+        ax.plot(combined_df.index[:len(df1)], combined_df['Sales'][:len(df1)], color = 'blue', linestyle='--', label='Original Data')
+
+        # Plot projected sales values with a different linestyle
+        ax.plot(combined_df.index[len(df1):], combined_df['Sales'][len(df1):], color = 'red', linestyle='-', label='Projected Sales')
+        
         max_y_value = max(df1.iloc[:,0].values.max(), nextyear['Sales'].max()) + 2
         ax.set_ylim(0, max_y_value)
-        ax1.set_ylim(0, max_y_value)
 
         ax.set_xticks(subset_time_axis)
         ax.set_xticklabels(time_axisLabels[subset_time_axis], rotation=45)
         ax.set_xlabel('\nMonth', fontsize=20, fontweight='bold')
         ax.set_ylabel('Sales', fontsize=20, fontweight='bold')
 
-        ax.legend(loc='best', prop={'size':20})
-        ax.tick_params(size=10, labelsize=15)
-
-        ax1.set_title('Projected Sales')
-        ax1.plot(nextyear['Sales'], color='red', label='predicted next year(s)')
-        ax1.set_xticklabels(np.array(nextyear['Month'], dtype='datetime64[D]'), rotation=45)
-        ax1.set_xlabel('Month', fontsize=20, fontweight='bold')
-        ax1.set_ylabel('Sales', fontsize=20, fontweight='bold')
-        ax1.tick_params(size=10, labelsize=15)
-
-        st.pyplot(fig)  
+        ax.set_xlabel('Month')
+        ax.set_ylabel('Sales')
+        ax.grid(True)
+        ax.tick_params(axis='x', rotation=45)
+        fig.tight_layout()
+        st.pyplot(fig)
 
         st.write('Predicted Sales for the next', years, 'years:')
 
