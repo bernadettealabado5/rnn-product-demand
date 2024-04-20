@@ -8,8 +8,24 @@ import matplotlib.pyplot as plt
 import time
 
 def app():
-    st.title('Demand Forecasting')
-    st.write('Welcome to the Demand Forecasting page!') 
+    
+    st.subheader('Store Item Demand Forecasting Using RNN with LSTM')
+
+    text = """Prof. Louie F. Cervantes, M. Eng. (Information Engineering)
+    \nCCS 229 - Intelligent Systems
+    *Department of Computer Science
+    *College of Information and Communications Technology
+    *##West Visayas State University##"""
+    st.text(text)
+
+    text = """This Streamlit app utilizes a Recurrent Neural Network (RNN) with 
+    Long Short-Term Memory (LSTM) units to forecast future store item demand. 
+    The model is trained on time series data provided by the Kaggle 'Store Item Demand 
+    Forecasting Challenge' dataset. You can interact with the app to visualize 
+    past sales data and generate predictions for future periods. Under the hood, the app 
+    leverages Streamlit's capabilities to create a user-friendly interface for 
+    exploring time series forecasting with LSTMs. """
+    st.write(text) 
 
     df = pd.read_csv('./data/train.csv')
 
