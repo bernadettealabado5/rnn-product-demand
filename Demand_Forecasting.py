@@ -159,9 +159,6 @@ def app():
         st.session_state.model = model
 
     if st.sidebar.button("Start Training"):
-        if "model" not in st.session_state:
-            st.error("Please train the model before making predictions.")  
-            return
 
         progress_bar = st.progress(0, text="Training the LSTM network, please wait...")           
         # Train the model
@@ -198,6 +195,10 @@ def app():
 
 
     if st.sidebar.button("Predictions"):
+        if "model" not in st.session_state:
+            st.error("Please train the model before making predictions.")  
+            return
+        
         # Get the predicted values and compute the accuracy metrics
         y_pred_train = model.predict(x_train)
         y_pred_test = model.predict(x_test)
