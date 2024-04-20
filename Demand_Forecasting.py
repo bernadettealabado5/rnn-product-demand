@@ -165,7 +165,7 @@ def app():
             st.session_state.model = model
         progress_bar = st.progress(0, text="Training the LSTM network, please wait...")           
         # Train the model
-        history = model.fit(x_train, y_train, epochs=200, batch_size=64, validation_data=(x_test, y_test))
+        history = model.fit(x_train, y_train, epochs=20, batch_size=64, validation_data=(x_test, y_test))
 
         fig, ax = plt.subplots()  # Create a figure and an axes
         ax.plot(history.history['loss'], label='Train')  # Plot training loss on ax
@@ -222,8 +222,11 @@ def app():
 
         # Inverse transform the predictions to get the original scale
         predvalues = scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
-        predvalues = pd.DataFrame(predvalues)
-        predvalues.set_index(df1.index, inplace=True)
+        predvalues = pd.DataFrame(predvalues)  
+        predvalues.set_index(df1.index, inplace=True)   
+        predvalues.rename(columns={'predvalues': 'sales'}, inplace=True)
+        
+        st.write(predvalues)
 
         pred_period = years * 12    
         # Use the model to predict the next year of data
@@ -262,10 +265,10 @@ def app():
         months = pd.date_range(start='2018-01', end=end, freq='MS')
 
         # Create a Pandas DataFrame with the datetime and values columns
-        nextyear = pd.DataFrame({'Month': months, 'Sales': prednext})
+        nextyear = pd.DataFrame({'dste': months, 'sales': prednext})
 
         # Convert column 'Sales' to integer
-        nextyear['Sales'] = nextyear['Sales'].astype(int)
+        nextyear['sales'] = nextyear['sales'].astype(int)
 
         time_axis = np.linspace(0, df1.shape[0]-1, pred_period)
         time_axis = np.array([int(i) for i in time_axis])
@@ -279,16 +282,28 @@ def app():
 
         ax.set_title('Comparison of Actual and Predicted Sales')
 
-        # Concatenate the two dataframes vertically
-        combined_df = pd.concat([df1, nextyear])
+        # Reset the index of df1 and predvalues
+        df1_reset = df1.reset_index()
+        predvalues_reset = predvalues.reset_index()
 
-        ax.plot(combined_df.index[:len(df1)], list(predvalues[0]), color='red', linestyle='-', label='Model Predictions')  # Solid line for model predictions
+        st.write(df1)
+        st.write(predvalues)
+
+        # Concatenate the two dataframes horizontally using the date column from df1 as the index
+        combined_df = pd.concat([df1_reset, predvalues_reset], axis=1)
+
+        # Set the index of the concatenated dataframe to the date column
+        combined_df.set_index('date', inplace=True)
+        st.write(combined_df)
+        return
+
+        ax.plot(list(predvalues[0]), color='red', linestyle='-', label='Model Predictions')  # Solid line for model predictions
 
         # Plot df1's sales values with one linestyle
-        ax.plot(combined_df.index[:len(df1)], combined_df['Sales'][:len(df1)], color = 'blue', linestyle='--', label='Original Data')
+        ax.plot(df1['sales'], color = 'blue', linestyle='--', label='Original Data')
 
         # Plot projected sales values with a different linestyle
-        ax.plot(combined_df.index[len(df1):], combined_df['Sales'][len(df1):], color = 'red', linestyle='-', label='Projected Sales')
+        #ax.plot(combined_df.index[len(df1):], combined_df['Sales'][len(df1):], color = 'red', linestyle='-', label='Projected Sales')
         
         max_y_value = max(df1.iloc[:,0].values.max(), nextyear['Sales'].max()) + 2
         ax.set_ylim(0, max_y_value)
