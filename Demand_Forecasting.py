@@ -11,7 +11,7 @@ def app():
 
     st.subheader('Store Item Demand Forecasting Using RNN-LSTM and GRU')
 
-    text = """Prof. Louie F. Cervantes, M. Eng. (Information Engineering)
+    text = """**Prof. Louie F. Cervantes, M. Eng. (Information Engineering)**
     \nCCS 229 - Intelligent Systems :: Department of Computer Science
     College of Information and Communications Technology
     **West Visayas State University**"""
@@ -20,7 +20,7 @@ def app():
     text = """This Streamlit app utilizes one of the following: a Recurrent Neural Network (RNN) with 
     Long Short-Term Memory (LSTM) units or a Gated Recurrent Units (GRU) to forecast future store item demand. 
     The model is trained on time series data provided by the Kaggle 'Store Item Demand 
-    Forecasting Challenge' dataset. You can interact with the app to visualize 
+    Forecasting Challenge' https://www.kaggle.com/competitions/demand-forecasting-kernels-only dataset. You can interact with the app to visualize 
     past sales data and generate predictions for future periods. Under the hood, the app 
     leverages Streamlit's capabilities to create a user-friendly interface for 
     exploring time series forecasting with LSTMs. """
@@ -49,7 +49,7 @@ def app():
     inventory management and enhance business performance in the retail sector."""
     with st.expander("Read About the Challenge and Solution"):
         st.write(text)  
-
+    
     df = pd.read_csv('./data/train.csv')
 
     # Filter records based on store and item (assuming single values)
@@ -67,9 +67,10 @@ def app():
     selected_option = st.sidebar.selectbox("Select model type:", options)
     model_type = selected_option
 
+    st.sidebar.write("Lookback is the number of months for the model to consider when making predictions.")
     options = ['12', '24', '36', '48', '60', '72']
     # Create the option box using st.selectbox
-    selected_option = st.sidebar.selectbox("Set lookback:", options)
+    selected_option = st.sidebar.selectbox("Set lookback:", options, index=2)
     look_back = int(selected_option)    
 
     filtered_df = df[(df['store'] == store_to_filter) & (df['item'] == item_to_filter)]
@@ -92,18 +93,12 @@ def app():
 
     st.write("The Time Series Plot")
 
-    # Assuming your dataframe is called 'df'
-    fig, ax = plt.subplots()  # Create a figure and an axes
-
-    # Plot the timeseries data on the axes
+    fig, ax = plt.subplots()  
     ax.plot(df1['sales'])
-
-    # Optional customizations
     ax.set_title('Sales Over Time')
     ax.set_xlabel('Date')
     ax.set_ylabel('Sales')
-    ax.grid(True)  # Add gridlines for better readability
-
+    ax.grid(True)  
     # Limit the number of ticks on the x-axis to 10 (adjust as needed)
     plt.xticks(rotation=45)  # Rotate x-axis labels for better readability (optional)
     locator = plt.MaxNLocator(nbins=10)
@@ -131,11 +126,10 @@ def app():
     y_train = y_train.to_numpy()
     y_test = y_test.to_numpy()
 
-    #look_back = 12  # Number of past months to consider
     n_features = 1  # Number of features in your typhoon data
 
     if model_type == 'LSTM':
-        model =  tf.keras.Sequential([  # Use Bidirectional LSTM or GRU (comment out the other)
+        model =  tf.keras.Sequential([  
             tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(128, return_sequences=True), input_shape=(look_back, n_features)),
             tf.keras.layers.Dropout(0.3),
             tf.keras.layers.GRU(64, return_sequences=True),  # Another GRU layer
@@ -145,12 +139,28 @@ def app():
             tf.keras.layers.Dense(1)
         ])
     elif model_type == 'GRU':
-        model =  tf.keras.Sequential([  # Use Bidirectional LSTM or GRU (comment out the other)
-            tf.keras.layers.GRU(128, return_sequences=True, input_shape=(look_back, n_features)),            tf.keras.layers.Dropout(0.3),
-            tf.keras.layers.GRU(64, return_sequences=True),  # Another GRU layer
+        # Define the improved model architecture
+        model = tf.keras.Sequential([
+            tf.keras.layers.GRU(128, return_sequences=True, input_shape=(look_back, n_features)),
+            tf.keras.layers.Dropout(0.3),
+            
+            # Add another GRU layer for better feature extraction
+            tf.keras.layers.GRU(64, return_sequences=True),
             tf.keras.layers.Dropout(0.2),
-            tf.keras.layers.GRU(32),  # Reduced units for final layer
+            
+            # Reduce the complexity of the model to prevent overfitting
+            tf.keras.layers.GRU(32),
             tf.keras.layers.Dropout(0.1),
+            
+            # Introduce a dense layer with more neurons for better representation
+            tf.keras.layers.Dense(64, activation='relu'),  # Add dense layer with ReLU activation
+            tf.keras.layers.Dropout(0.1),
+            
+            # Add one more dense layer for better learning
+            tf.keras.layers.Dense(32, activation='relu'),  # Add dense layer with ReLU activation
+            tf.keras.layers.Dropout(0.1),
+            
+            # Output layer with one neuron for regression task
             tf.keras.layers.Dense(1)
         ])
             
@@ -165,7 +175,7 @@ def app():
             st.session_state.model = model
         progress_bar = st.progress(0, text="Training the LSTM network, please wait...")           
         # Train the model
-        history = model.fit(x_train, y_train, epochs=20, batch_size=64, validation_data=(x_test, y_test))
+        history = model.fit(x_train, y_train, epochs=500, batch_size=64, validation_data=(x_test, y_test))
 
         fig, ax = plt.subplots()  # Create a figure and an axes
         ax.plot(history.history['loss'], label='Train')  # Plot training loss on ax
@@ -190,12 +200,11 @@ def app():
 
     years = st.sidebar.slider(   
         label="Number years to forecast:",
-        min_value=2,
+        min_value=1,
         max_value=6,
-        value=6,
+        value=4,
         step=1
     )
-
 
     if st.sidebar.button("Predictions"):
         if "model" not in st.session_state:
@@ -222,16 +231,19 @@ def app():
 
         # Inverse transform the predictions to get the original scale
         predvalues = scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
-        predvalues = pd.DataFrame(predvalues)  
-        predvalues.set_index(df1.index, inplace=True)   
-        predvalues.rename(columns={'predvalues': 'sales'}, inplace=True)
-        
-        st.write(predvalues)
+  
+        # Convert predvalues to integers
+        predvalues_int = predvalues.astype(int)
+
+        # Create a DataFrame with a column named "sales"
+        predvalues = pd.DataFrame({'sales': predvalues_int.flatten()})
+
+        # use the same index as the original data
+        predvalues.index = df1.index
 
         pred_period = years * 12    
         # Use the model to predict the next year of data
         input_seq_len = look_back         
-        num_features=1
 
         # check that look_back is less than the length of the data
         last_seq = data_norm[-input_seq_len:] 
@@ -251,6 +263,9 @@ def app():
         #flatten the array from 2-dim to 1-dim
         prednext = [item for sublist in prednext for item in sublist]
 
+        # Convert prednext to integers
+        prednext = [int(x) for x in prednext]
+
         end_dates = {
             12: '2018-12',
             24: '2019-12',
@@ -264,52 +279,26 @@ def app():
 
         months = pd.date_range(start='2018-01', end=end, freq='MS')
 
-        # Create a Pandas DataFrame with the datetime and values columns
-        nextyear = pd.DataFrame({'dste': months, 'sales': prednext})
+        # Create a DataFrame with a column named "sales"
+        nextyear = pd.DataFrame(prednext, index=months, columns=["sales"])
 
-        # Convert column 'Sales' to integer
-        nextyear['sales'] = nextyear['sales'].astype(int)
-
-        time_axis = np.linspace(0, df1.shape[0]-1, pred_period)
-        time_axis = np.array([int(i) for i in time_axis])
-        time_axisLabels = np.array(df1.index, dtype='datetime64[D]')
-
-        # Determine the subset of time_axis to use for xticks
-        step = max(1, len(time_axis) // 10)  # Ensure at least 1 tick
-        subset_time_axis = time_axis[::step]
+        # Concatenate along the rows (axis=0)
+        combined_df = pd.concat([df1, nextyear], axis=0)
 
         fig, ax = plt.subplots(figsize=(10, 6))
-
         ax.set_title('Comparison of Actual and Predicted Sales')
 
-        # Reset the index of df1 and predvalues
-        df1_reset = df1.reset_index()
-        predvalues_reset = predvalues.reset_index()
-
-        st.write(df1)
-        st.write(predvalues)
-
-        # Concatenate the two dataframes horizontally using the date column from df1 as the index
-        combined_df = pd.concat([df1_reset, predvalues_reset], axis=1)
-
-        # Set the index of the concatenated dataframe to the date column
-        combined_df.set_index('date', inplace=True)
-        st.write(combined_df)
-        return
-
-        ax.plot(list(predvalues[0]), color='red', linestyle='-', label='Model Predictions')  # Solid line for model predictions
+        ax.plot(predvalues['sales'], color='red', linestyle='--', label='Model Predictions')  # dotted line for model predictions
 
         # Plot df1's sales values with one linestyle
-        ax.plot(df1['sales'], color = 'blue', linestyle='--', label='Original Data')
+        ax.plot(df1['sales'], color = 'blue', linestyle='-', label='Original Data')
 
         # Plot projected sales values with a different linestyle
-        #ax.plot(combined_df.index[len(df1):], combined_df['Sales'][len(df1):], color = 'red', linestyle='-', label='Projected Sales')
-        
-        max_y_value = max(df1.iloc[:,0].values.max(), nextyear['Sales'].max()) + 2
+        ax.plot(combined_df.index[len(df1):], combined_df['sales'][len(df1):], color = 'red', marker = 'o', linestyle='-', label='Projected Sales')
+
+        max_y_value = max(df1['sales'].values.max(), nextyear['sales'].max()) + 2
         ax.set_ylim(0, max_y_value)
 
-        ax.set_xticks(subset_time_axis)
-        ax.set_xticklabels(time_axisLabels[subset_time_axis], rotation=45)
         ax.set_xlabel('\nMonth', fontsize=20, fontweight='bold')
         ax.set_ylabel('Sales', fontsize=20, fontweight='bold')
 
@@ -317,13 +306,15 @@ def app():
         ax.set_ylabel('Sales')
         ax.grid(True)
         ax.tick_params(axis='x', rotation=45)
+        # Add the legend
+        ax.legend()  # This line adds the legend
         fig.tight_layout()
         st.pyplot(fig)
 
         st.write('Predicted Sales for the next', years, 'years:')
 
         fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(nextyear['Month'], nextyear['Sales'], marker='o', linestyle='-')
+        ax.plot(nextyear['sales'], marker='o', linestyle='-')
         ax.set_title('Projected Sales Over Time')
         ax.set_xlabel('Month')
         ax.set_ylabel('Sales')
@@ -336,6 +327,35 @@ def app():
             st.write("The Predicted Dataset")
             st.write(nextyear)   
             st.write(nextyear.shape)
+
+        with st.expander("Read About the Lookback"):
+            text = """When discussing the performance of an RNN LSTM (Recurrent Neural 
+            Network Long Short-Term Memory) model on item sales forecast data, it's 
+            crucial to consider the impact of the "lookback" period on the model's 
+            predictive capability. The "lookback" period refers to the number of 
+            previous time steps the model uses to make predictions. In your scenario, 
+            the lookback period is varied between 12 months and 36 months.
+            \nWhen the lookback is set to a small number, such as 12 months, 
+            the model is better at capturing short-term patterns and fluctuations 
+            in sales data. This is because it focuses on recent history, enabling it 
+            to adapt quickly to changes in consumer behavior, seasonal trends, or 
+            promotional activities. As a result, the model may exhibit strong 
+            performance in predicting the changing patterns of sales over shorter 
+            time horizons.
+            \nHowever, as the lookback period increases to 36 months or longer, 
+            the model's ability to capture short-term fluctuations diminishes. 
+            Instead, it starts to emphasize longer-term trends and patterns in the data. 
+            While this may lead to more stable and consistent predictions over longer 
+            time horizons, it may also result in a loss of sensitivity to short-term dynamics. 
+            Consequently, the model may predict lower sales overall, as it focuses more on 
+            the average behavior observed over the extended period.
+            \nIn essence, the choice of lookback period involves a trade-off 
+            between capturing short-term fluctuations and maintaining a broader 
+            perspective on long-term trends. A shorter lookback period enables the 
+            model to react quickly to changes but may sacrifice accuracy over 
+            longer periods. Conversely, a longer lookback period provides a more 
+            stable outlook but may overlook short-term dynamics."""
+            st.write(text)
 
 if __name__ == "__main__":
     app()   
