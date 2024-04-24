@@ -68,7 +68,7 @@ def app():
     model_type = selected_option
 
     st.sidebar.write("Lookback is the number of months for the model to consider when making predictions.")
-    options = ['12', '24', '36', '48', '60', '72']
+    options = ['12', '24', '36', '48', '60']
     # Create the option box using st.selectbox
     selected_option = st.sidebar.selectbox("Set lookback:", options, index=2)
     look_back = int(selected_option)    
