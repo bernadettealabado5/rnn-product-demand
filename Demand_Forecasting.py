@@ -171,37 +171,37 @@ def app():
     model.summary()
 
     if st.sidebar.button("Start Training"):
-    if "model" not in st.session_state:
+        if "model" not in st.session_state:
+            st.session_state.model = model
+        progress_bar = st.progress(0, text="Training the LSTM network, please wait...")           
+        # Train the model
+        history = model.fit(x_train, y_train, epochs=500, batch_size=64, validation_data=(x_test, y_test))
+
+        fig, ax = plt.subplots()  # Create a figure and an axes
+        ax.plot(history.history['loss'], label='Train')  # Plot training loss on ax
+        ax.plot(history.history['val_loss'], label='Validation')  # Plot validation loss on ax
+
+        ax.set_title('Model loss')  # Set title on ax
+        ax.set_ylabel('Loss')  # Set y-label on ax
+        ax.set_xlabel('Epoch')  # Set x-label on ax
+
+        ax.legend()  # Add legend
+        st.pyplot(fig)
         st.session_state.model = model
-    progress_bar = st.progress(0, text="Training the LSTM network, please wait...")           
-    # Train the model
-    history = model.fit(x_train, y_train, epochs=500, batch_size=64, validation_data=(x_test, y_test))
 
-    fig, ax = plt.subplots()  # Create a figure and an axes
-    ax.plot(history.history['loss'], label='Train')  # Plot training loss on ax
-    ax.plot(history.history['val_loss'], label='Validation')  # Plot validation loss on ax
+        # Print model summary if the model is defined
+        if "model" in st.session_state:
+            st.write("Model Summary:")
+            st.write(model.summary())
 
-    ax.set_title('Model loss')  # Set title on ax
-    ax.set_ylabel('Loss')  # Set y-label on ax
-    ax.set_xlabel('Epoch')  # Set x-label on ax
-
-    ax.legend()  # Add legend
-    st.pyplot(fig)
-    st.session_state.model = model
-
-    # Print model summary if the model is defined
-    if "model" in st.session_state:
-        st.write("Model Summary:")
-        st.write(model.summary())
-
-    # update the progress bar
-    for i in range(100):
-        # Update progress bar value
-        progress_bar.progress(i + 1)
-        # Simulate some time-consuming task (e.g., sleep)
-        time.sleep(0.01)
-    # Progress bar reaches 100% after the loop completes
-    st.success("LSTM Network training completed!")  
+        # update the progress bar
+        for i in range(100):
+            # Update progress bar value
+            progress_bar.progress(i + 1)
+            # Simulate some time-consuming task (e.g., sleep)
+            time.sleep(0.01)
+        # Progress bar reaches 100% after the loop completes
+        st.success("LSTM Network training completed!")  
 
     years = st.sidebar.slider(   
         label="Number years to forecast:",
